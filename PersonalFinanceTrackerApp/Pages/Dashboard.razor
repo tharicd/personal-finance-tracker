@@ -1,0 +1,127 @@
+﻿@page "/"
+@using PersonalFinanceTrackerApp.Models
+@using PersonalFinanceTrackerApp.Service
+@inject FinanceEntryService EntryService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+
+@if (_entries == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Class="mb-3"
+               OnClick="@(() => Navigation.NavigateTo("/add-entry"))">
+        Add Entry
+    </MudButton>
+
+    <MudTable Items="_entries" Hover="true" Elevation="4">
+        <HeaderContent>
+            <MudTh>Date</MudTh>
+            <MudTh>Description</MudTh>
+            <MudTh>Amount</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            @if (_editingEntryId == context.Id)
+            {
+                <MudTd><MudDatePicker @bind-Date="context.Date" MaxDate="@DateTime.Today" /></MudTd>
+                <MudTd><MudTextField @bind-Value="context.Description" /></MudTd>
+                <MudTd><MudNumericField @bind-Value="context.Amount" /></MudTd>
+                <MudTd><MudText>@context.Type</MudText></MudTd>
+                <MudTd>
+                    <MudButton Color="Color.Success" Size="Size.Small" OnClick="() => SaveEdit(context)">Save</MudButton>
+                    <MudButton Color="Color.Secondary" Size="Size.Small" OnClick="CancelEdit" Class="ms-2">Cancel</MudButton>
+                </MudTd>
+            }
+            else
+            {
+                <MudTd>@context.Date?.ToShortDateString()</MudTd>
+                <MudTd>@context.Description</MudTd>
+                <MudTd>@context.Amount.ToString("F2")</MudTd>
+                <MudTd>@context.Type</MudTd>
+                <MudTd>
+                    <MudButton Color="Color.Warning" Size="Size.Small" OnClick="() => Edit(context.Id)">Edit</MudButton>
+                    <MudButton Color="Color.Error" Size="Size.Small" OnClick="() => Delete(context.Id)" Class="ms-2">Delete</MudButton>
+                </MudTd>
+            }
+        </RowTemplate>
+    </MudTable>
+
+    <MudPaper Class="pa-4 mt-4" Elevation="4">
+        <MudText Typo="Typo.h6" Class="mb-2">Summary</MudText>
+        <MudText><strong>Total Income:</strong> @_totalIncome</MudText>
+        <MudText><strong>Total Expenses:</strong> @_totalExpenses</MudText>
+        <MudText><strong>Savings:</strong> @_savings</MudText>
+    </MudPaper>
+}
+
+@code {
+    private List<FinanceEntry>? _entries;
+    private decimal _totalIncome;
+    private decimal _totalExpenses;
+    private decimal _savings;
+    private int? _editingEntryId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        _entries = await EntryService.GetEntriesAsync();
+        CalculateSummary();
+    }
+
+    private void Edit(int id)
+    {
+        _editingEntryId = id;
+    }
+
+    private void CancelEdit()
+    {
+        _editingEntryId = null;
+    }
+
+    private async Task SaveEdit(FinanceEntry entry)
+    {
+        var isUpdated = await EntryService.UpdateEntryAsync(entry);
+        if (isUpdated)
+        {
+            Snackbar.Add("Entry updated successfully!", Severity.Success);
+            _editingEntryId = null;
+            await LoadEntries();
+        }
+        else
+        {
+            Snackbar.Add("Failed to update entry. Please try again.", Severity.Error);
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        var isDeleted = await EntryService.DeleteEntryAsync(id);
+        if (isDeleted)
+        {
+            Snackbar.Add("Entry deleted successfully!", Severity.Success);
+            await LoadEntries();
+        }
+        else
+        {
+            Snackbar.Add("Failed to delete entry. Please try again.", Severity.Error);
+        }
+        
+    }
+
+    private void CalculateSummary()
+    {
+        _totalIncome = _entries?.Where(e => e.Type == EntryType.Income).Sum(e => e.Amount) ?? 0;
+        _totalExpenses = _entries?.Where(e => e.Type == EntryType.Expense).Sum(e => e.Amount) ?? 0;
+        _savings = _totalIncome - _totalExpenses;
+    }
+}

@@ -1,0 +1,30 @@
+﻿@inherits LayoutComponentBase
+
+<MudLayout>
+
+    <!-- App Bar -->
+    <MudAppBar Color="Color.Primary" Elevation="4">
+        <MudText Typo="Typo.h6">PersonalFinanceTrackerApp</MudText>
+        <MudSpacer />
+        <MudLink Href="https://docs.microsoft.com/aspnet/" Target="_blank">About</MudLink>
+    </MudAppBar>
+
+    <!-- Side Navigation Drawer -->
+    <MudDrawer DrawerType="DrawerType.Side" Open="true" Elevation="1" ClipMode="DrawerClipMode.Always">
+        <NavMenu />
+    </MudDrawer>
+
+    <!-- Main Content Area -->
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+
+    <!-- Required Providers -->
+    <MudThemeProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    <MudPopoverProvider />
+
+</MudLayout>

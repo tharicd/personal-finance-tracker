@@ -1,0 +1,61 @@
+﻿@page "/add-entry"
+@using PersonalFinanceTrackerApp.Models
+@using PersonalFinanceTrackerApp.Service
+@inject FinanceEntryService EntryService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<EditForm Model="@_entry" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <MudPaper Class="pa-4 mt-4" Style="max-width: 500px;" Elevation="4">
+        <MudText Typo="Typo.h5" Class="mb-4">Add Finance Entry</MudText>
+
+        <MudDatePicker @bind-Date="_entry.Date"
+                       Label="Date"
+                       MaxDate="@DateTime.Today"
+                       Class="mb-3" />
+
+        <MudTextField @bind-Value="_entry.Description"
+                      Label="Description"
+                      Required="true"
+                      Class="mb-3" />
+
+        <MudNumericField @bind-Value="_entry.Amount"
+                         Label="Amount"
+                         Required="true"
+                         Class="mb-3" />
+
+        <MudSelect T="EntryType" @bind-Value="_entry.Type" Label="Type" Class="mb-3">
+            <MudSelectItem Value="EntryType.Income">Income</MudSelectItem>
+            <MudSelectItem Value="EntryType.Expense">Expense</MudSelectItem>
+        </MudSelect>
+
+        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Add Entry</MudButton>
+        <MudButton OnClick="Cancel" Class="ms-2" Color="Color.Secondary">Cancel</MudButton>
+    </MudPaper>
+</EditForm>
+
+@code {
+    private FinanceEntry _entry = new();
+
+    private async Task HandleValidSubmit()
+    {
+        var isAdded = await EntryService.AddEntryAsync(_entry);
+        if (isAdded)
+        {
+            Snackbar.Add("Entry added successfully!", Severity.Success);
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Snackbar.Add("Failed to add entry. Please try again.", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        _entry = new();
+    }
+}
